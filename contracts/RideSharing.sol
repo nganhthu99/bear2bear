@@ -1,6 +1,6 @@
 pragma experimental ABIEncoderV2;
 
-// contract.registerDrive('0xBa981Bac71ABf0bf4c6FBa5949b1eb8F75adaA6d', '0829527843', 'MOTORCYCLE', 'Honda Alpha', "Thanh Da", 25000)
+// contract.registerDrive('0x5110E08969264C603C62a9805687Dd065B7c4789', '0829527843', 0, 'Honda Alpha', "Thanh Da", 25000)
 
 contract RideSharing {
     function RideSharing() {
@@ -15,19 +15,25 @@ contract RideSharing {
         FREE, IS_PROCESSING
     }
 
+    enum UPDATE_DRIVER_MESSAGE{
+        ADD_DRIVER, REMOVE_DRIVER
+    }
+
     // DRIVER
     Driver[] public listDrivers;
 
-    function getListDrivers() returns (Driver[]) {
+    function getListDrivers() public view returns (Driver[]) {
         return listDrivers;
     }
 
-    function removeDriverByIndex(uint index) {
+    function removeDriverByIndex (uint index) {
         listDrivers[index] = listDrivers[listDrivers.length - 1];
+        listDrivers[index].driverIndex = index;
         delete listDrivers[listDrivers.length - 1];
     }
 
     struct Driver {
+        uint driverIndex;
         address driverAddress;
         string phoneNumber;
         VEHICLE_TYPE ownedVehicle;
@@ -46,19 +52,29 @@ contract RideSharing {
         string _position,
         uint _pricePerKm) {
 
-        listDrivers.push(
-            Driver(
-                _driverAddress,
-                _phoneNumber,
-                _ownedVehicle,
-                _detailVehicle,
-                _position,
-                _pricePerKm,
-                DRIVER_STATE.FREE,
-                Rider('', '', '')
-            )
+        Driver memory driver = Driver(
+            listDrivers.length,
+            _driverAddress,
+            _phoneNumber,
+            _ownedVehicle,
+            _detailVehicle,
+            _position,
+            _pricePerKm,
+            DRIVER_STATE.FREE,
+            Rider('', '', '')
         );
-        emit UpdateListDrivers("HELLO FROM CONTRACT");
+
+        listDrivers.push(driver);
+        emit UpdateListDrivers(UPDATE_DRIVER_MESSAGE.ADD_DRIVER,
+            driver.driverIndex,
+            driver.driverAddress,
+            driver.phoneNumber,
+            driver.ownedVehicle,
+            driver.detailVehicle,
+            driver.position,
+            driver.pricePerKm,
+            driver.state
+        );
     }
 
     // RIDER
@@ -68,24 +84,45 @@ contract RideSharing {
         string position;
     }
 
-    function processRide(uint _driverIndex, address _driverAddress, string _riderAddress, string _riderPhoneNumber, string _riderPosition) {
+    function processRide(uint _driverIndex, address _driverAddress, string _riderAddress, string _riderPhoneNumber, string _riderPosition) public {
+        Rider memory rider = Rider(_riderAddress, _riderPhoneNumber, _riderPosition);
         listDrivers[_driverIndex].state = DRIVER_STATE.IS_PROCESSING;
-        listDrivers[_driverIndex].rider = Rider(_riderAddress, _riderPhoneNumber, _riderPosition);
-        emit NewRideIsProcessing(_driverAddress, Rider(_riderAddress, _riderPhoneNumber, _riderPosition));
+        listDrivers[_driverIndex].rider = rider;
+        emit NewRideIsProcessing(_driverAddress, rider.riderAddress, rider.phoneNumber, rider.position);
     }
 
-    function confirmRide(uint _index) {
+    function confirmRide(uint _index) public {
+        Driver memory driver = listDrivers[_index];
+        emit UpdateListDrivers(UPDATE_DRIVER_MESSAGE.REMOVE_DRIVER,
+            driver.driverIndex,
+            driver.driverAddress,
+            driver.phoneNumber,
+            driver.ownedVehicle,
+            driver.detailVehicle,
+            driver.position,
+            driver.pricePerKm,
+            driver.state
+        );
         removeDriverByIndex(_index);
-        emit UpdateListDrivers("HELLO FROM CONTRACT");
     }
 
-    event UpdateListDrivers(
-        string message
+    event UpdateListDrivers (
+        UPDATE_DRIVER_MESSAGE message,
+        uint driverIndex,
+        address driverAddress,
+        string phoneNumber,
+        VEHICLE_TYPE ownedVehicle,
+        string detailVehicle,
+        string position,
+        uint pricePerKm,
+        DRIVER_STATE state
     );
 
     event NewRideIsProcessing (
         address driverAddress,
-        Rider rider
+        string riderAddress,
+        string phoneNumber,
+        string position
     );
 }
 
