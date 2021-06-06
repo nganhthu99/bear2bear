@@ -15,10 +15,6 @@ contract RideSharing {
         FREE, IS_PROCESSING
     }
 
-    enum UPDATE_DRIVER_MESSAGE{
-        ADD_DRIVER, REMOVE_DRIVER
-    }
-
     // DRIVER
     Driver[] public listDrivers;
 
@@ -26,18 +22,12 @@ contract RideSharing {
         return listDrivers;
     }
 
-    function removeDriverByIndex (uint index) {
-        listDrivers[index] = listDrivers[listDrivers.length - 1];
-        listDrivers[index].driverIndex = index;
-        delete listDrivers[listDrivers.length - 1];
-    }
-
     struct Driver {
-        uint driverIndex;
-        address driverAddress;
+        uint index;
+        address addr;
         string phoneNumber;
-        VEHICLE_TYPE ownedVehicle;
-        string detailVehicle;
+        VEHICLE_TYPE vehicleType;
+        string vehicleDetail;
         string position;
         uint pricePerKm;
         DRIVER_STATE state;
@@ -45,36 +35,26 @@ contract RideSharing {
     }
 
     function registerDrive(
-        address _driverAddress,
-        string _phoneNumber,
-        VEHICLE_TYPE _ownedVehicle,
-        string _detailVehicle,
-        string _position,
-        uint _pricePerKm) {
+        address addr,
+        string phoneNumber,
+        VEHICLE_TYPE vehicleType,
+        string vehicleDetail,
+        string position,
+        uint pricePerKm) {
 
         Driver memory driver = Driver(
             listDrivers.length,
-            _driverAddress,
-            _phoneNumber,
-            _ownedVehicle,
-            _detailVehicle,
-            _position,
-            _pricePerKm,
+            addr,
+            phoneNumber,
+            vehicleType,
+            vehicleDetail,
+            position,
+            pricePerKm,
             DRIVER_STATE.FREE,
-            Rider('', '', '')
+            Rider('', '', '', '')
         );
 
         listDrivers.push(driver);
-        emit UpdateListDrivers(UPDATE_DRIVER_MESSAGE.ADD_DRIVER,
-            driver.driverIndex,
-            driver.driverAddress,
-            driver.phoneNumber,
-            driver.ownedVehicle,
-            driver.detailVehicle,
-            driver.position,
-            driver.pricePerKm,
-            driver.state
-        );
     }
 
     // RIDER
@@ -82,47 +62,34 @@ contract RideSharing {
         string riderAddress;
         string phoneNumber;
         string position;
+        string destination;
     }
 
-    function processRide(uint _driverIndex, address _driverAddress, string _riderAddress, string _riderPhoneNumber, string _riderPosition) public {
-        Rider memory rider = Rider(_riderAddress, _riderPhoneNumber, _riderPosition);
-        listDrivers[_driverIndex].state = DRIVER_STATE.IS_PROCESSING;
-        listDrivers[_driverIndex].rider = rider;
-        emit NewRideIsProcessing(_driverAddress, rider.riderAddress, rider.phoneNumber, rider.position);
+    function processRide(uint driverIndex, address driverAddress, string riderAddress, string riderPhoneNumber, string riderPosition, string riderDestination) public {
+        Rider memory rider = Rider(riderAddress, riderPhoneNumber, riderPosition, riderDestination);
+        listDrivers[driverIndex].state = DRIVER_STATE.IS_PROCESSING;
+        listDrivers[driverIndex].rider = rider;
+        emit NewRide(driverIndex, driverAddress, rider.riderAddress, rider.phoneNumber, rider.position, rider.destination);
     }
 
-    function confirmRide(uint _index) public {
-        Driver memory driver = listDrivers[_index];
-        emit UpdateListDrivers(UPDATE_DRIVER_MESSAGE.REMOVE_DRIVER,
-            driver.driverIndex,
-            driver.driverAddress,
-            driver.phoneNumber,
-            driver.ownedVehicle,
-            driver.detailVehicle,
-            driver.position,
-            driver.pricePerKm,
-            driver.state
-        );
-        removeDriverByIndex(_index);
+    function removeDriverByIndex (uint index) {
+        listDrivers[index] = listDrivers[listDrivers.length - 1];
+        listDrivers[index].index = index;
+//        delete listDrivers[listDrivers.length - 1];
+        listDrivers.length--;
     }
 
-    event UpdateListDrivers (
-        UPDATE_DRIVER_MESSAGE message,
+    function confirmRide(uint driverIndex) public {
+        removeDriverByIndex(driverIndex);
+    }
+
+    event NewRide (
         uint driverIndex,
         address driverAddress,
-        string phoneNumber,
-        VEHICLE_TYPE ownedVehicle,
-        string detailVehicle,
-        string position,
-        uint pricePerKm,
-        DRIVER_STATE state
-    );
-
-    event NewRideIsProcessing (
-        address driverAddress,
         string riderAddress,
-        string phoneNumber,
-        string position
+        string riderPhoneNumber,
+        string riderPosition,
+        string riderDestination
     );
 }
 
