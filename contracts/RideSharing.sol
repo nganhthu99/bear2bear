@@ -22,6 +22,10 @@ contract RideSharing {
     // DRIVER
     Driver[] public listDrivers;
 
+    function driversCount() public constant returns (uint count){
+        return listDrivers.length;
+    }
+
     function getListDrivers() public view returns (Driver[]) {
         return listDrivers;
     }
@@ -30,6 +34,20 @@ contract RideSharing {
         listDrivers[index] = listDrivers[listDrivers.length - 1];
         listDrivers[index].driverIndex = index;
         delete listDrivers[listDrivers.length - 1];
+    }
+
+    function findSuitableDrivers(string _riderPosition, VEHICLE_TYPE _riderSelectedVechcle) public view returns(Driver[] resultList, uint resultCount){
+        uint MAX_DRIVERS = 10;
+        uint suiIndex = 0;
+        Driver[] memory  suitableDrivers  = new Driver[](MAX_DRIVERS);
+        for (uint index = 0; index< driversCount(); index++){
+            if (listDrivers[index].ownedVehicle == _riderSelectedVechcle && suiIndex < MAX_DRIVERS){
+                suitableDrivers[suiIndex] = listDrivers[index];
+                suiIndex++;
+            }
+        }
+        uint count = suiIndex;
+        return (suitableDrivers, count);
     }
 
     struct Driver {
@@ -61,7 +79,7 @@ contract RideSharing {
             _position,
             _pricePerKm,
             DRIVER_STATE.FREE,
-            Rider('', '', '')
+            Rider('', '', '', VEHICLE_TYPE.MOTORCYCLE)
         );
 
         listDrivers.push(driver);
@@ -82,13 +100,14 @@ contract RideSharing {
         string riderAddress;
         string phoneNumber;
         string position;
+        VEHICLE_TYPE selectedVehicle;
     }
 
-    function processRide(uint _driverIndex, address _driverAddress, string _riderAddress, string _riderPhoneNumber, string _riderPosition) public {
-        Rider memory rider = Rider(_riderAddress, _riderPhoneNumber, _riderPosition);
+    function processRide(uint _driverIndex, address _driverAddress, string _riderAddress, string _riderPhoneNumber, string _riderPosition, VEHICLE_TYPE _riderSelectedVechcle) public {
+        Rider memory rider = Rider(_riderAddress, _riderPhoneNumber, _riderPosition, _riderSelectedVechcle);
         listDrivers[_driverIndex].state = DRIVER_STATE.IS_PROCESSING;
         listDrivers[_driverIndex].rider = rider;
-        emit NewRideIsProcessing(_driverAddress, rider.riderAddress, rider.phoneNumber, rider.position);
+        emit NewRideIsProcessing(_driverAddress, rider.riderAddress, rider.phoneNumber, rider.position, rider.selectedVehicle);
     }
 
     function confirmRide(uint _index) public {
@@ -122,7 +141,8 @@ contract RideSharing {
         address driverAddress,
         string riderAddress,
         string phoneNumber,
-        string position
+        string position,
+        VEHICLE_TYPE selectedVehicle
     );
 }
 
