@@ -51,7 +51,7 @@ contract RideSharing {
             position,
             pricePerKm,
             DRIVER_STATE.FREE,
-            Rider('', '', '', '')
+            Rider('', '', '', '', 0)
         );
 
         listDrivers.push(driver);
@@ -63,13 +63,14 @@ contract RideSharing {
         string phoneNumber;
         string position;
         string destination;
+        uint distance;
     }
 
-    function processRide(uint driverIndex, address driverAddress, string riderAddress, string riderPhoneNumber, string riderPosition, string riderDestination) public {
-        Rider memory rider = Rider(riderAddress, riderPhoneNumber, riderPosition, riderDestination);
+    function processRide(uint driverIndex, address driverAddress, string riderAddress, string riderPhoneNumber, string riderPosition, string riderDestination, uint riderDistance) public {
+        Rider memory rider = Rider(riderAddress, riderPhoneNumber, riderPosition, riderDestination, riderDistance);
         listDrivers[driverIndex].state = DRIVER_STATE.IS_PROCESSING;
         listDrivers[driverIndex].rider = rider;
-        emit NewRide(driverIndex, driverAddress, rider.riderAddress, rider.phoneNumber, rider.position, rider.destination);
+        emit NewRide(driverIndex, driverAddress, rider.riderAddress, rider.phoneNumber, rider.position, rider.destination, rider.distance);
     }
 
     function removeDriverByIndex (uint index) {
@@ -79,7 +80,7 @@ contract RideSharing {
         listDrivers.length--;
     }
 
-    function confirmRide(uint driverIndex) public {
+    function finishRide(uint driverIndex) public {
         removeDriverByIndex(driverIndex);
     }
 
@@ -89,7 +90,7 @@ contract RideSharing {
         string riderAddress,
         string riderPhoneNumber,
         string riderPosition,
-        string riderDestination
+        string riderDestination,
+        uint riderDistance
     );
 }
-
