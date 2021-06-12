@@ -61,7 +61,7 @@ contract RideSharing {
             position,
             pricePerKm,
             DRIVER_STATE.FREE,
-            Rider('', '', '', '', geometryRider),
+            Rider('', '', '', '', 0, geometryRider),
 						geometry
         );
 
@@ -74,15 +74,16 @@ contract RideSharing {
         string phoneNumber;
         string position;
         string destination;
+				uint distance;
 				Geometry geometry;
     }
 
-    function processRide(uint driverIndex, address driverAddress, string riderAddress, string riderPhoneNumber, string riderPosition, string riderDestination, string lat, string lng) public {
-				Geometry memory geometry = Geometry(lat, lng);
-        Rider memory rider = Rider(riderAddress, riderPhoneNumber, riderPosition, riderDestination, geometry);
+    function processRide(uint driverIndex, address driverAddress, string riderAddress, string riderPhoneNumber, string riderPosition, string riderDestination, uint riderDistance, string lat, string lng) public {
+        Geometry memory geometry = Geometry(lat, lng);
+				Rider memory rider = Rider(riderAddress, riderPhoneNumber, riderPosition, riderDestination, riderDistance, geometry);
         listDrivers[driverIndex].state = DRIVER_STATE.IS_PROCESSING;
         listDrivers[driverIndex].rider = rider;
-        emit NewRide(driverIndex, driverAddress, rider.riderAddress, rider.phoneNumber, rider.position, rider.destination, lat, lng);
+        emit NewRide(driverIndex, driverAddress, rider.riderAddress, rider.phoneNumber, rider.position, rider.destination, rider.distance, lat, lng);
     }
 
     function removeDriverByIndex (uint index) {
@@ -92,7 +93,7 @@ contract RideSharing {
         listDrivers.length--;
     }
 
-    function confirmRide(uint driverIndex) public {
+    function finishRide(uint driverIndex) public {
         removeDriverByIndex(driverIndex);
     }
 
@@ -103,8 +104,8 @@ contract RideSharing {
         string riderPhoneNumber,
         string riderPosition,
         string riderDestination,
+        uint riderDistance,
 				string lat,
 				string lng
     );
 }
-
