@@ -22,6 +22,11 @@ contract RideSharing {
         return listDrivers;
     }
 
+		struct Geometry {
+				string lat;
+				string lng;
+		}
+
     struct Driver {
         uint index;
         address addr;
@@ -32,6 +37,7 @@ contract RideSharing {
         uint pricePerKm;
         DRIVER_STATE state;
         Rider rider;
+				Geometry geometry;
     }
 
     function registerDrive(
@@ -40,7 +46,11 @@ contract RideSharing {
         VEHICLE_TYPE vehicleType,
         string vehicleDetail,
         string position,
-        uint pricePerKm) {
+        uint pricePerKm,
+				string lat,
+				string lng) {
+				Geometry memory geometry = Geometry(lat, lng);
+				Geometry memory geometryRider = Geometry("0", "0");
 
         Driver memory driver = Driver(
             listDrivers.length,
@@ -51,7 +61,8 @@ contract RideSharing {
             position,
             pricePerKm,
             DRIVER_STATE.FREE,
-            Rider('', '', '', '')
+            Rider('', '', '', '', geometryRider),
+						geometry
         );
 
         listDrivers.push(driver);
@@ -63,13 +74,15 @@ contract RideSharing {
         string phoneNumber;
         string position;
         string destination;
+				Geometry geometry;
     }
 
-    function processRide(uint driverIndex, address driverAddress, string riderAddress, string riderPhoneNumber, string riderPosition, string riderDestination) public {
-        Rider memory rider = Rider(riderAddress, riderPhoneNumber, riderPosition, riderDestination);
+    function processRide(uint driverIndex, address driverAddress, string riderAddress, string riderPhoneNumber, string riderPosition, string riderDestination, string lat, string lng) public {
+				Geometry memory geometry = Geometry(lat, lng);
+        Rider memory rider = Rider(riderAddress, riderPhoneNumber, riderPosition, riderDestination, geometry);
         listDrivers[driverIndex].state = DRIVER_STATE.IS_PROCESSING;
         listDrivers[driverIndex].rider = rider;
-        emit NewRide(driverIndex, driverAddress, rider.riderAddress, rider.phoneNumber, rider.position, rider.destination);
+        emit NewRide(driverIndex, driverAddress, rider.riderAddress, rider.phoneNumber, rider.position, rider.destination, lat, lng);
     }
 
     function removeDriverByIndex (uint index) {
@@ -89,7 +102,9 @@ contract RideSharing {
         string riderAddress,
         string riderPhoneNumber,
         string riderPosition,
-        string riderDestination
+        string riderDestination,
+				string lat,
+				string lng
     );
 }
 
